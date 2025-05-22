@@ -1,6 +1,10 @@
+use std::time::Duration;
+
 use crate::relay::{RELAYS_RANGE, RelayArray, RelayState};
+
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum, error::ErrorKind};
 
+pub mod communication;
 pub mod relay;
 
 #[derive(Parser, Debug, Clone)]
@@ -11,10 +15,6 @@ pub mod relay;
 )]
 #[command(author = "Dmitry Akimov MU LLC")]
 struct AppArgs {
-    /// Enable verbose mode
-    #[arg(short, long)]
-    verbose: bool,
-
     #[command(subcommand)]
     cmd: RelayCommand,
 }
@@ -42,53 +42,63 @@ enum RelayCommand {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Для отладки
+    // let ports = serialport::available_ports().expect("No ports found!");
+    // for p in ports {
+    //     println!("{}", p.port_name);
+    // }
+
     let args = AppArgs::parse();
 
-    //dbg!(args.clone());
+    let mut relay_array = RelayArray::new(
+        "/dev/cu.usbmodem554F0114591",
+        9600,
+        Duration::from_millis(10000),
+    );
 
-    let mut relay_array = RelayArray::new();
-
-    // Check for verbose mode
-    if args.verbose {
-        println!("Verbose mode is enabled");
-    }
+    relay_array.fetch_state_from_remote()?;
+    // Для отладки
+    println!("Состояния реле с интерфейсной платы:");
+    relay_array.print_local_state();
 
     match args.cmd {
-        RelayCommand::GetState { relay_range } => match get_list_of_relay_numbers(&relay_range) {
-            Ok(relays_list) => {
-                println!("Get the range{:?}", relays_list);
-                // TODO: получение состояния требуемых реле
-                relay_array.show_state(&relays_list);
-            }
+        RelayCommand::GetState { relay_range } => {
+            match create_list_of_relay_numbers(&relay_range) {
+                Ok(relays_list) => {
+                    //println!("Get the range{:?}", relays_list);
+                    // TODO: получение состояния определенных номеров реле
+                    println!("Получено текущее состояние:");
+                    relay_array.print_local_state();
+                    relay_array.fetch_state_from_remote()?;
+                    relay_array.print_local_state();
+                }
 
-            // TODO: запаковать в функцию
-            Err(e) => {
-                let mut cmd = AppArgs::command();
-                if e == RangeError::InvalidRange {
-                    cmd.error(
-                        ErrorKind::InvalidValue,
-                        "The range must be like a,b,c or x,y-z,a,f where y < z",
-                    )
-                    .exit();
-                } else {
-                    cmd.error(
-                        ErrorKind::InvalidValue,
-                        "Relay number must be less than 18 and greater than 0!",
-                    )
-                    .exit();
+                // TODO: запаковать в функцию
+                Err(e) => {
+                    let mut cmd = AppArgs::command();
+                    if e == RangeError::InvalidRange {
+                        cmd.error(
+                            ErrorKind::InvalidValue,
+                            "The range must be like a,b,c or x,y-z,a,f where y < z",
+                        )
+                        .exit();
+                    } else {
+                        cmd.error(
+                            ErrorKind::InvalidValue,
+                            "Relay number must be less than 18 and greater than 0!",
+                        )
+                        .exit();
+                    }
                 }
             }
-        },
+        }
         RelayCommand::SetState { relay_range, state } => {
-            match get_list_of_relay_numbers(&relay_range) {
+            match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
-                    println!("Set the range{:?}", relays_list);
-                    // TODO: установка состояний требуемых реле
-                    relay_array.show_state(&relays_list);
-                    relay_array.set_state(&relays_list, state);
-                    relay_array.show_state(&relays_list);
-                    let s = relay_array.serialize_state();
-                    println!("Serialized state: {}", s);
+                    //println!("Set the range{:?}", relays_list);
+                    relay_array.push_state_to_remote(&relays_list, state)?;
+                    println!("Загружено новое состояние:");
+                    relay_array.print_local_state();
                 }
                 // TODO: запаковать в функцию
                 Err(e) => {
@@ -114,7 +124,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn get_list_of_relay_numbers(s: &str) -> Result<Vec<u8>, RangeError> {
+fn create_list_of_relay_numbers(s: &str) -> Result<Vec<u8>, RangeError> {
     if let Ok(mut range) = range_parser::parse(s) {
         range.sort();
         range.dedup();

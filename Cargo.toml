@@ -8,3 +8,5 @@ authors = ["Dmitry Akimov <akimov@machunit.com>"]
 clap = { version = "4.5.38", features = ["derive"] }
 range-parser = "0.1.2"
 serialport = "4.7.2"
+ascii_converter = "0.3.0"
+hex="0.4.3"
