@@ -28,7 +28,7 @@ impl RelayArray {
     }
 
     pub fn print_local_state(&self) {
-        println!("Local state: {}", self.serialize_local_state());
+        println!("Local state: {:0>8}", self.serialize_local_state());
     }
 
     pub fn update_local_state(
@@ -50,6 +50,21 @@ impl RelayArray {
         Some(result)
     }
 
+    pub fn export_local_state(&self, relay_range: &Vec<u8>) -> String {
+        let mut result = String::new();
+        result.push_str("; Test ini comment\n");
+        result.push_str("[RELAYS]\n");
+        for relay in relay_range {
+            if let Some(state) = self.state.get(relay) {
+                result.push_str(&format!("{}={}\n", relay, state));
+            } else {
+                result.push_str(&format!("{}=ERR\n", relay));
+            }
+        }
+        result
+    }
+
+    /// Сериализация локального состояния реле
     pub fn serialize_local_state(&self) -> String {
         let mut relay_state: u32 = 0b000000000000000000;
         for (relay, state) in self.state.iter() {
@@ -61,6 +76,7 @@ impl RelayArray {
         format!("{:x}", relay_state)
     }
 
+    /// Отправка обновленного состояния реле на интерфейсную плату
     pub fn push_state_to_remote(
         &mut self,
         relay_range: &Vec<u8>,

@@ -18,6 +18,7 @@ impl SerialInterface {
         }
     }
 
+    /// Отправка данных на интерфейсную плату
     pub fn write_data(&mut self, data: &[u8]) -> Result<usize, String> {
         if let Ok(size) = self.port_instance.write(data) {
             return Ok(size);
@@ -25,6 +26,7 @@ impl SerialInterface {
         return Err(format!("Failed to write to port: {}", self.port_name));
     }
 
+    /// Очистка входного буфера приемника
     pub fn clear_input_buffer(&mut self) -> Result<(), String> {
         if let Ok(_) = self.port_instance.clear(serialport::ClearBuffer::Input) {
             return Ok(());
@@ -32,6 +34,7 @@ impl SerialInterface {
         return Err(format!("Failed to clear input buffer: {}", self.port_name));
     }
 
+    /// Чтение данных от интерфейсной платы
     pub fn read_data(&mut self, data: &mut [u8]) -> Result<usize, String> {
         if let Ok(size) = self.port_instance.read(data) {
             return Ok(size);

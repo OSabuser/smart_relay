@@ -65,12 +65,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RelayCommand::GetState { relay_range } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
-                    //println!("Get the range{:?}", relays_list);
                     // TODO: получение состояния определенных номеров реле
                     println!("Получено текущее состояние:");
-                    relay_array.print_local_state();
                     relay_array.fetch_state_from_remote()?;
-                    relay_array.print_local_state();
+                    println!("{}", relay_array.export_local_state(&relays_list));
                 }
 
                 // TODO: запаковать в функцию
@@ -95,7 +93,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RelayCommand::SetState { relay_range, state } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
-                    //println!("Set the range{:?}", relays_list);
                     relay_array.push_state_to_remote(&relays_list, state)?;
                     println!("Загружено новое состояние:");
                     relay_array.print_local_state();
