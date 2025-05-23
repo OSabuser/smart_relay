@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fmt::Display, time::Duration};
-use ascii_converter::decimals_to_string;
-use clap::ValueEnum;
-use chrono;
 use crate::communication::SerialInterface;
+use ascii_converter::decimals_to_string;
+use chrono;
+use clap::ValueEnum;
+use std::{collections::HashMap, fmt::Display, time::Duration};
 
 pub const RELAYS_RANGE: (u8, u8) = (1, 18);
 
@@ -38,7 +38,7 @@ impl RelayArray {
                 result.push_str(&format!("{}=ERR\n", relay));
             }
         }
-        println!("{}", result); 
+        println!("{}", result);
     }
 
     pub fn update_local_state(
@@ -48,7 +48,7 @@ impl RelayArray {
     ) -> Option<String> {
         // Обновление локального состояния реле
         let mut result = String::new();
-        
+
         for relay in relay_range {
             if let Some(relay_state) = self.state.get_mut(relay) {
                 *relay_state = state.clone();
@@ -114,6 +114,9 @@ impl RelayArray {
     pub fn fetch_state_from_remote(&mut self) -> Result<(), String> {
         let mut serial_buf: Vec<u8> = vec![0; 128];
 
+        //TODO: переписать полностью!
+        // read_to_end/read_to_string/read_exact
+
         // Отправка запроса на интерфейсную плату
         self.serial_interface.write_data(b"get\r\n")?;
 
@@ -122,7 +125,7 @@ impl RelayArray {
         self.serial_interface.read_data(serial_buf.as_mut_slice())?;
         // println!("RAW Bytes: {:?}", serial_buf);
         // println!("RAW String: {}", String::from_utf8_lossy(&serial_buf));
-        
+
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
 

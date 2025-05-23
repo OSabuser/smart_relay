@@ -1,10 +1,12 @@
+use crate::relay::{RelayArray, RelayState, RELAYS_RANGE};
+use clap::{error::ErrorKind, CommandFactory, Parser, Subcommand, ValueEnum};
 use std::time::Duration;
-use crate::relay::{RELAYS_RANGE, RelayArray, RelayState};
-use clap::{CommandFactory, Parser, Subcommand, ValueEnum, error::ErrorKind};
-
 
 pub mod communication;
 pub mod relay;
+
+// TODO: crate thiserror
+// Создать единый тип ошибок, вклюащий в себя ошибки от коммуникации и от реле
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -40,8 +42,7 @@ enum RelayCommand {
     },
 }
 
-
-
+// TODO: режим verbose
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Для отладки
     // let ports = serialport::available_ports().expect("No ports found!");
@@ -51,15 +52,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let args = AppArgs::parse();
 
-
-    let mut relay_array = RelayArray::new(
-        "/dev/ttyS4",
-        9600,
-        Duration::from_millis(5000),
-    );
+    // TODO: работа с Native tty
+    let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(5000));
 
     relay_array.fetch_state_from_remote()?;
-    
+
     // Для отладки
     // println!("Состояния реле с интерфейсной платы:");
     // relay_array.print_local_state();
@@ -69,6 +66,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
                     relay_array.fetch_state_from_remote()?;
+                    //TODO: объединить с print_local_state
+                    //TODO: создавать ini файл
                     println!("{}", relay_array.export_local_state(&relays_list));
                 }
 
@@ -95,6 +94,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
                     relay_array.push_state_to_remote(&relays_list, state)?;
+                    //TODO: объединить с export_local_state
+                    //TODO: создавать ini файл
                     relay_array.print_local_state(&relays_list);
                 }
                 // TODO: запаковать в функцию
