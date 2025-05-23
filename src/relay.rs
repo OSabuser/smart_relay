@@ -1,8 +1,7 @@
 use std::{collections::HashMap, fmt::Display, time::Duration};
-
 use ascii_converter::decimals_to_string;
 use clap::ValueEnum;
-
+use chrono;
 use crate::communication::SerialInterface;
 
 pub const RELAYS_RANGE: (u8, u8) = (1, 18);
@@ -27,8 +26,19 @@ impl RelayArray {
         }
     }
 
-    pub fn print_local_state(&self) {
-        println!("Local state: {:0>8}", self.serialize_local_state());
+    pub fn print_local_state(&self, relay_range: &Vec<u8>) {
+        let mut result = String::new();
+        result.push_str("; Pushed relay states\n");
+        result.push_str(&format!("; {:?}\n", chrono::offset::Local::now()));
+        result.push_str("[RELAYS]\n");
+        for relay in relay_range {
+            if let Some(state) = self.state.get(relay) {
+                result.push_str(&format!("{}={}\n", relay, state));
+            } else {
+                result.push_str(&format!("{}=ERR\n", relay));
+            }
+        }
+        println!("{}", result); 
     }
 
     pub fn update_local_state(
@@ -38,6 +48,7 @@ impl RelayArray {
     ) -> Option<String> {
         // Обновление локального состояния реле
         let mut result = String::new();
+        
         for relay in relay_range {
             if let Some(relay_state) = self.state.get_mut(relay) {
                 *relay_state = state.clone();
@@ -52,7 +63,8 @@ impl RelayArray {
 
     pub fn export_local_state(&self, relay_range: &Vec<u8>) -> String {
         let mut result = String::new();
-        result.push_str("; Test ini comment\n");
+        result.push_str("; Fetched relay states\n");
+        result.push_str(&format!("; {:?}\n", chrono::offset::Local::now()));
         result.push_str("[RELAYS]\n");
         for relay in relay_range {
             if let Some(state) = self.state.get(relay) {
@@ -100,14 +112,17 @@ impl RelayArray {
 
     /// Получение состояния реле с интерфейсной платы
     pub fn fetch_state_from_remote(&mut self) -> Result<(), String> {
-        let mut serial_buf: Vec<u8> = vec![0; 26];
+        let mut serial_buf: Vec<u8> = vec![0; 128];
 
         // Отправка запроса на интерфейсную плату
         self.serial_interface.write_data(b"get\r\n")?;
 
         // Чтение ответа
         self.serial_interface.read_data(serial_buf.as_mut_slice())?;
-
+        self.serial_interface.read_data(serial_buf.as_mut_slice())?;
+        // println!("RAW Bytes: {:?}", serial_buf);
+        // println!("RAW String: {}", String::from_utf8_lossy(&serial_buf));
+        
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
 

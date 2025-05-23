@@ -28,7 +28,7 @@ impl SerialInterface {
 
     /// Очистка входного буфера приемника
     pub fn clear_input_buffer(&mut self) -> Result<(), String> {
-        if let Ok(_) = self.port_instance.clear(serialport::ClearBuffer::Input) {
+        if let Ok(_) = self.port_instance.clear(serialport::ClearBuffer::All) {
             return Ok(());
         }
         return Err(format!("Failed to clear input buffer: {}", self.port_name));
@@ -36,9 +36,10 @@ impl SerialInterface {
 
     /// Чтение данных от интерфейсной платы
     pub fn read_data(&mut self, data: &mut [u8]) -> Result<usize, String> {
+        
         if let Ok(size) = self.port_instance.read(data) {
             return Ok(size);
         }
-        return Err("Timeout has been reached".to_string());
+        return Err("IMv2: Timeout has been reached".to_string());
     }
 }
