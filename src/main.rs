@@ -58,8 +58,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     relay_array.fetch_state_from_remote()?;
 
     // Для отладки
-    // println!("Состояния реле с интерфейсной платы:");
-    // relay_array.print_local_state();
+   // println!("Состояния реле с интерфейсной платы:");
+   // relay_array.print_local_state();
 
     match args.cmd {
         RelayCommand::GetState { relay_range } => {

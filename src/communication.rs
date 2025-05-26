@@ -34,11 +34,13 @@ impl SerialInterface {
         return Err(format!("Failed to clear input buffer: {}", self.port_name));
     }
 
+
     /// Чтение данных от интерфейсной платы
     pub fn read_data(&mut self, data: &mut [u8]) -> Result<usize, String> {
-        
-        if let Ok(size) = self.port_instance.read(data) {
-            return Ok(size);
+
+        //read_to_end(&mut self, dest_vec: &mut Vec<u8>) -> io::Result<usize>
+        if let Ok(size) = self.port_instance.read_exact(data)  {
+            return Ok(1_usize);
         }
         return Err("IMv2: Timeout has been reached".to_string());
     }

@@ -112,7 +112,7 @@ impl RelayArray {
 
     /// Получение состояния реле с интерфейсной платы
     pub fn fetch_state_from_remote(&mut self) -> Result<(), String> {
-        let mut serial_buf: Vec<u8> = vec![0; 128];
+        let mut serial_buf: Vec<u8> = vec![0; 35];
 
         //TODO: переписать полностью!
         // read_to_end/read_to_string/read_exact
@@ -121,10 +121,12 @@ impl RelayArray {
         self.serial_interface.write_data(b"get\r\n")?;
 
         // Чтение ответа
-        self.serial_interface.read_data(serial_buf.as_mut_slice())?;
-        self.serial_interface.read_data(serial_buf.as_mut_slice())?;
-        // println!("RAW Bytes: {:?}", serial_buf);
-        // println!("RAW String: {}", String::from_utf8_lossy(&serial_buf));
+       self.serial_interface.read_data(&mut serial_buf)?;
+
+     
+
+        println!("Raw bytes from serial: {:?}", serial_buf);
+        println!("Raw bytes as utf8 string: {}", String::from_utf8_lossy(&serial_buf));
 
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
@@ -139,7 +141,7 @@ impl RelayArray {
             // Справа от делиметера - число - состояние
             if let Some(x) = ascii_string_parts.get(1) {
                 // Преобразование в hex
-                //let hex_number = i32::from_str_radix(x, 16).unwrap();
+                println!("Try to get hex value: {}", x);
 
                 if let Ok(hex_number) = i32::from_str_radix(x, 16) {
                     // Обновление локального состояния реле
@@ -155,12 +157,12 @@ impl RelayArray {
                     }
                     return Ok(());
                 }
-                return Err("Failed to convert data to hex value".to_string());
+                return Err("Failed to convert data into hex number".to_string());
             } else {
                 return Err("Failed to split recieved string".to_string());
             }
         } else {
-            return Err("Failed to convert data to ASCII string".to_string());
+            return Err("Failed to convert raw data into ASCII string".to_string());
         }
     }
 }
