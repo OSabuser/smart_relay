@@ -54,12 +54,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // TODO: работа с Native tty
     let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(5000));
-
+    relay_array.say_handshake();
     relay_array.fetch_state_from_remote()?;
 
     // Для отладки
-   // println!("Состояния реле с интерфейсной платы:");
-   // relay_array.print_local_state();
+    // println!("Состояния реле с интерфейсной платы:");
+    // relay_array.print_local_state();
 
     match args.cmd {
         RelayCommand::GetState { relay_range } => {

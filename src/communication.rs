@@ -18,6 +18,13 @@ impl SerialInterface {
         }
     }
 
+    /// Грязная запись без всяких проверок
+    pub fn write_data_unsafe(&mut self, data: &[u8]) -> () {
+        match self.port_instance.write(data) {
+            _ => println!("smart_relay v0.0.1"), 
+        }
+    }
+
     /// Отправка данных на интерфейсную плату
     pub fn write_data(&mut self, data: &[u8]) -> Result<usize, String> {
         if let Ok(size) = self.port_instance.write(data) {

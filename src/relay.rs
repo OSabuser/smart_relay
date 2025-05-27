@@ -41,6 +41,11 @@ impl RelayArray {
         println!("{}", result);
     }
 
+    pub fn say_handshake(&mut self) {
+        // Отправка запроса на интерфейсную плату
+        self.serial_interface.write_data_unsafe(b"hello\r\n");
+    }
+
     pub fn update_local_state(
         &mut self,
         relay_range: &Vec<u8>,
@@ -121,12 +126,13 @@ impl RelayArray {
         self.serial_interface.write_data(b"get\r\n")?;
 
         // Чтение ответа
-       self.serial_interface.read_data(&mut serial_buf)?;
-
-     
+        self.serial_interface.read_data(&mut serial_buf)?;
 
         println!("Raw bytes from serial: {:?}", serial_buf);
-        println!("Raw bytes as utf8 string: {}", String::from_utf8_lossy(&serial_buf));
+        println!(
+            "Raw bytes as utf8 string: {}",
+            String::from_utf8_lossy(&serial_buf)
+        );
 
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
