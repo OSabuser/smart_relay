@@ -1,6 +1,6 @@
 use crate::relay::{RelayArray, RelayState, RELAYS_RANGE};
 use clap::{error::ErrorKind, CommandFactory, Parser, Subcommand, ValueEnum};
-use std::time::Duration;
+use std::{thread, time::Duration};
 
 pub mod communication;
 pub mod relay;
@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: работа с Native tty
     let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(5000));
     relay_array.say_handshake();
+    thread::sleep(Duration::from_millis(250));
     relay_array.fetch_state_from_remote()?;
 
     // Для отладки
