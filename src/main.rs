@@ -54,8 +54,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // TODO: работа с Native tty
     let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(5000));
-    relay_array.say_handshake();
+
+    println!("#1 Sending handshake...");
+    relay_array.say_handshake()?;
     thread::sleep(Duration::from_millis(250));
+
+    println!("#2 Initial fetching state from remote...");
     relay_array.fetch_state_from_remote()?;
 
     // Для отладки
@@ -66,6 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RelayCommand::GetState { relay_range } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
+                    println!("#3 GET fetching state from remote...");
                     relay_array.fetch_state_from_remote()?;
                     //TODO: объединить с print_local_state
                     //TODO: создавать ini файл
@@ -94,6 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RelayCommand::SetState { relay_range, state } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
+                    println!("#3 SET fetching state from remote...");
                     relay_array.push_state_to_remote(&relays_list, state)?;
                     //TODO: объединить с export_local_state
                     //TODO: создавать ini файл

@@ -21,7 +21,7 @@ impl SerialInterface {
     /// Грязная запись без всяких проверок
     pub fn write_data_unsafe(&mut self, data: &[u8]) -> () {
         match self.port_instance.write(data) {
-            _ => println!("smart_relay v0.0.1"), 
+            _ => println!("# smart_relay v0.0.1"), 
         }
     }
 
@@ -43,11 +43,10 @@ impl SerialInterface {
 
 
     /// Чтение данных от интерфейсной платы
-    pub fn read_data(&mut self, data: &mut [u8]) -> Result<usize, String> {
+    pub fn read_data(&mut self, data: &mut [u8]) -> Result<(), String> {
 
-        //read_to_end(&mut self, dest_vec: &mut Vec<u8>) -> io::Result<usize>
-        if let Ok(size) = self.port_instance.read_exact(data)  {
-            return Ok(1_usize);
+        if let Ok(_) = self.port_instance.read_exact(data)  {
+            return Ok(());
         }
         return Err("IMv2: Timeout has been reached".to_string());
     }

@@ -41,9 +41,19 @@ impl RelayArray {
         println!("{}", result);
     }
 
-    pub fn say_handshake(&mut self) {
+    pub fn say_handshake(&mut self) -> Result<(), String> {
         // Отправка запроса на интерфейсную плату
         self.serial_interface.write_data_unsafe(b"hello\r\n");
+
+        let mut serial_buf: Vec<u8> = vec![0; 5];
+        // Чтение ответа
+        self.serial_interface.read_data(&mut serial_buf)?;
+        println!("Raw bytes as utf8 string: {}", String::from_utf8_lossy(&serial_buf));
+
+        // Очистка буфера - приемника
+        self.serial_interface.clear_input_buffer()?;
+
+        Ok(())
     }
 
     pub fn update_local_state(
@@ -109,6 +119,7 @@ impl RelayArray {
 
         // Отправка обновленного состояния реле на интерфейсную плату
         let local_state = self.serialize_local_state();
+        println!("#4 SET sending {} to remote...", local_state);
         let data = format!("set {}\r\n", local_state);
         self.serial_interface.write_data(data.as_bytes())?;
 
@@ -119,16 +130,12 @@ impl RelayArray {
     pub fn fetch_state_from_remote(&mut self) -> Result<(), String> {
         let mut serial_buf: Vec<u8> = vec![0; 35];
 
-        //TODO: переписать полностью!
-        // read_to_end/read_to_string/read_exact
-
         // Отправка запроса на интерфейсную плату
         self.serial_interface.write_data(b"get\r\n")?;
 
         // Чтение ответа
         self.serial_interface.read_data(&mut serial_buf)?;
 
-        println!("Raw bytes from serial: {:?}", serial_buf);
         println!(
             "Raw bytes as utf8 string: {}",
             String::from_utf8_lossy(&serial_buf)
@@ -146,8 +153,6 @@ impl RelayArray {
 
             // Справа от делиметера - число - состояние
             if let Some(x) = ascii_string_parts.get(1) {
-                // Преобразование в hex
-                println!("Try to get hex value: {}", x);
 
                 if let Ok(hex_number) = i32::from_str_radix(x, 16) {
                     // Обновление локального состояния реле
