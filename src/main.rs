@@ -53,27 +53,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = AppArgs::parse();
 
     // TODO: работа с Native tty
-    let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(5000));
+    let mut relay_array = RelayArray::new("/dev/ttyS4", 9600, Duration::from_millis(1000));
 
-    println!("#1 Sending handshake...");
-    relay_array.say_handshake()?;
-    thread::sleep(Duration::from_millis(250));
+    'handshake_loop:
+    for attempt in 0..=1 {
+        if let Err(_) = relay_array.say_handshake() {
+            if attempt == 1 {
+                return Err("Unable to establish connection with IMv1!".into());
+            } 
+        } else {
+            println!("; smart_relay v0.1.0");
+            println!("; Interface board version: IMv1");
+            println!("; status: Connected");
+            break 'handshake_loop;
+        }
+    }
 
-    println!("#2 Initial fetching state from remote...");
     relay_array.fetch_state_from_remote()?;
-
-    // Для отладки
-    // println!("Состояния реле с интерфейсной платы:");
-    // relay_array.print_local_state();
 
     match args.cmd {
         RelayCommand::GetState { relay_range } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
-                    println!("#3 GET fetching state from remote...");
                     relay_array.fetch_state_from_remote()?;
                     //TODO: объединить с print_local_state
-                    //TODO: создавать ini файл
                     println!("{}", relay_array.export_local_state(&relays_list));
                 }
 
@@ -99,10 +102,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RelayCommand::SetState { relay_range, state } => {
             match create_list_of_relay_numbers(&relay_range) {
                 Ok(relays_list) => {
-                    println!("#3 SET fetching state from remote...");
                     relay_array.push_state_to_remote(&relays_list, state)?;
                     //TODO: объединить с export_local_state
-                    //TODO: создавать ini файл
                     relay_array.print_local_state(&relays_list);
                 }
                 // TODO: запаковать в функцию

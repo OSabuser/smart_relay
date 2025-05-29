@@ -3,7 +3,7 @@
 echo "Starting the testing routine!"
 
 TOTAL_RELAYS=18
-SMART_RELAY_UTILITY_PATH="/home/user/Desktop/smart_relay/target/release/"
+SMART_RELAY_UTILITY_PATH="/home/user"
 
 echo There are $TOTAL_RELAYS relays mounted on the board
 

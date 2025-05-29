@@ -47,8 +47,7 @@ impl RelayArray {
 
         let mut serial_buf: Vec<u8> = vec![0; 5];
         // Чтение ответа
-        self.serial_interface.read_data(&mut serial_buf)?;
-        println!("Raw bytes as utf8 string: {}", String::from_utf8_lossy(&serial_buf));
+        self.serial_interface.read_data(&mut serial_buf)?;       
 
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
@@ -119,7 +118,6 @@ impl RelayArray {
 
         // Отправка обновленного состояния реле на интерфейсную плату
         let local_state = self.serialize_local_state();
-        println!("#4 SET sending {} to remote...", local_state);
         let data = format!("set {}\r\n", local_state);
         self.serial_interface.write_data(data.as_bytes())?;
 
@@ -135,11 +133,6 @@ impl RelayArray {
 
         // Чтение ответа
         self.serial_interface.read_data(&mut serial_buf)?;
-
-        println!(
-            "Raw bytes as utf8 string: {}",
-            String::from_utf8_lossy(&serial_buf)
-        );
 
         // Очистка буфера - приемника
         self.serial_interface.clear_input_buffer()?;
